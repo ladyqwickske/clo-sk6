@@ -4,7 +4,7 @@
   }
 
   const API_URL = window.GAS_WEB_APP_URL;
-  if (!API_URL || API_URL.includes('YOUR_WEB_APP_DEPLOYMENT_ID')) {
+  if (!API_URL || API_URL.includes('AKfycbx3KpRFDqogADP0q7i_Gk00Id5wPL22EPfMc7fS4cwah3ixmnpU_StY-ENoIC0k6HEdFQ')) {
     console.warn('[portal-shim] GAS_WEB_APP_URL is not set. Update pages/config.js');
   }
 
