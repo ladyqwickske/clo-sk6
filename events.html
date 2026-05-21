@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLO Champions SK6 - Events</title>
+  <link rel="icon" type="image/png" href="clo-sk6.png">
+  <script src="config.js"></script>
+  <script src="site-config.js"></script>
+  <script src="portal-shim.js"></script>
+  <style>
+    :root {
+      --primary: #5b3a8f; --primary-hover: #4a2d7a; --accent: #c8a415; --accent-light: #e6d06c;
+      --bg-dark: #f5f0e4; --bg-card: rgba(255, 252, 245, 0.97);
+      --text: #2d2418; --text-muted: #6b5d4e; --success: #7b52ab; --danger: #c0392b; --border: #d4c9b5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #e8dfd0 0%, #f5f0e4 100%);
+      color: var(--text); min-height: 100vh; background-attachment: fixed;
+      padding: 60px 8px 80px 8px;
+    }
+    .tab-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      display: flex; justify-content: center; background: #fffcf5;
+      border-bottom: 2px solid var(--accent);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .tab-nav a {
+      color: var(--text-muted); text-decoration: none; padding: 12px 18px;
+      font-size: 0.95em; font-weight: 500; border-bottom: 3px solid transparent;
+    }
+    .tab-nav a:hover { color: var(--primary); }
+    .tab-nav a.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .nav-icon { width: 18px; height: 18px; vertical-align: middle; margin-right: 4px; }
+    .login-bar {
+      position: fixed; top: 0; right: 8px; z-index: 1001;
+      display: flex; align-items: center; gap: 8px; padding: 8px;
+    }
+    .login-bar .user-email { font-size: 0.8em; color: var(--primary); }
+    .login-bar button {
+      background: var(--primary); color: #fff; border: none; border-radius: 6px;
+      padding: 6px 14px; cursor: pointer; font-weight: 600; font-size: 0.85em;
+    }
+    .login-bar .logout-btn { background: #c4b99a; color: var(--text); }
+    .container {
+      max-width: 1200px; margin: 0 auto; background: var(--bg-card);
+      border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 24px 16px;
+    }
+    h1 { color: var(--primary); text-align: center; margin-bottom: 4px; font-size: 1.8em; }
+    .site-logo { width: 64px; height: 64px; display: block; margin: 0 auto 8px auto; }
+    .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 16px; font-size: 0.9em; }
+
+    /* Admin panel */
+    .admin-panel { display: none; background: #f8f4ea; border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 1px solid var(--border); }
+    .admin-panel.visible { display: block; }
+    .admin-panel h3 { color: var(--primary); margin-bottom: 12px; font-size: 1em; }
+    .form-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .form-row input, .form-row select {
+      flex: 1; min-width: 120px; padding: 8px 12px;
+      background: #ffffff; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 0.9em;
+    }
+    .form-row input:focus, .form-row select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,122,109,0.15); }
+    .btn {
+      background: var(--primary); color: #fff; border: none; border-radius: 8px;
+      padding: 8px 16px; cursor: pointer; font-weight: 600; font-size: 0.9em;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn.danger { background: var(--danger); color: #fff; }
+    .btn.secondary { background: #c4b99a; color: var(--text); }
+
+    /* Tabs */
+    .sub-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+    .sub-tabs button {
+      background: #ede5d5; color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px 8px 0 0; padding: 8px 16px; cursor: pointer; font-size: 0.9em;
+    }
+    .sub-tabs button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* Events Table */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+    th { background: #ede5d5; color: var(--primary); padding: 10px 8px; text-align: left; border-bottom: 2px solid var(--accent); }
+    td { padding: 8px; border-bottom: 1px solid #eee; }
+    tr:hover { background: rgba(26,122,109,0.05); }
+
+    .method-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; font-weight: 600;
+    }
+    .method-chest { background: #d5f5e3; color: #1e8449; }
+    .method-manual { background: #d6eaf8; color: #2471a3; }
+    .method-period { background: #e8daef; color: #7d3c98; }
+
+    .event-actions button {
+      background: #ede5d5; color: var(--text); border: none; border-radius: 4px;
+      padding: 4px 8px; cursor: pointer; font-size: 0.8em; margin-right: 4px;
+    }
+    .event-actions button:hover { background: #ddd5c5; }
+
+    /* Participation Section */
+    .participation-section {
+      background: #f8f4ea; border-radius: 12px; padding: 16px; margin-top: 16px; border: 1px solid var(--border);
+    }
+    .participation-section h3 { color: var(--primary); margin-bottom: 12px; }
+
+    /* Chest Types Checkbox List */
+    .chest-types-section { margin-bottom: 12px; }
+    .chest-types-section label { display: block; font-weight: 600; color: var(--text); margin-bottom: 4px; font-size: 0.9em; }
+    .chest-types-section .note { font-size: 0.8em; color: var(--text-muted); margin-top: 4px; }
+    #chestTypesList {
+      max-height: 200px; overflow-y: auto;
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px; background: #fff;
+    }
+    .checkbox-item { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+    .checkbox-item:hover { background: #f5f0e4; }
+    .checkbox-item input[type="checkbox"] { cursor: pointer; accent-color: var(--primary); }
+    .checkbox-item label { margin: 0; font-weight: normal; color: var(--text); cursor: pointer; font-size: 0.9em; }
+
+    .loading { text-align: center; padding: 40px; color: var(--text-muted); }
+    .spinner {
+      display: inline-block; width: 24px; height: 24px;
+      border: 3px solid var(--border); border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; z-index: 3000;
+      background: #fff; color: var(--text); padding: 12px 20px;
+      border-radius: 8px; font-size: 0.9em; display: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    }
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error { border-left: 4px solid var(--danger); }
+    @media (max-width: 600px) {
+      body { padding: 50px 4px 70px 4px; }
+      .tab-nav a { padding: 10px 10px; font-size: 0.8em; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="tab-nav">
+  <a href="dashboard.html"><img src="chest.png" class="nav-icon" alt=""> Dashboard</a>
+  <a href="events.html" class="active"><img src="events.png" class="nav-icon" alt=""> Events</a>
+  <a href="members.html"><img src="members.png" class="nav-icon" alt=""> Members</a>
+  <a href="calendar.html"><img src="calendar.png" class="nav-icon" alt=""> Calendar</a>
+</nav>
+
+<div class="login-bar">
+  <span class="user-email" id="userEmail" style="display:none"></span>
+  <button id="loginBtn" onclick="handleLogin()">🔑 Login</button>
+  <button id="logoutBtn" class="logout-btn" style="display:none" onclick="handleLogout()">Logout</button>
+</div>
+
+<div class="login-gate" id="loginGate" style="max-width:500px;margin:80px auto;text-align:center;background:var(--bg-card);border-radius:16px;padding:40px 24px;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+  <h2 style="color:var(--primary);margin-bottom:12px;">🔒 Login Required</h2>
+  <p style="color:var(--text-muted);margin-bottom:20px;">You need to be logged in to view the Events page.</p>
+  <button class="btn" onclick="handleLogin()" style="padding:12px 32px;font-size:1em;">🔑 Login</button>
+</div>
+
+<div class="container" id="mainContent" style="display:none">
+  <img src="clo-sk6.png" alt="CLO Champions SK6" class="site-logo">
+  <h1>Events</h1>
+  <p class="subtitle">Event Management &amp; Participation Tracking</p>
+
+  <!-- Sub-tabs: Events / Event Types -->
+  <div class="sub-tabs">
+    <button class="active" onclick="switchTab('events', this)">Events</button>
+    <button onclick="switchTab('types', this)">Event Types</button>
+  </div>
+
+  <!-- Add Event Form (admin only) -->
+  <div class="admin-panel" id="adminPanel">
+    <h3 id="eventFormTitle">➕ Add New Event</h3>
+    <div class="form-row">
+      <input type="text" id="eventName" placeholder="Event Name">
+      <select id="eventType"><option value="">Select type...</option></select>
+      <input type="date" id="eventStartDate">
+      <input type="date" id="eventEndDate">
+      <input type="number" id="eventTargetPoints" placeholder="Target Points">
+    </div>
+    <div class="form-row">
+      <button class="btn" onclick="saveEvent()">Save Event</button>
+      <button class="btn secondary" id="cancelEditBtn" style="display:none" onclick="cancelEdit()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Events List -->
+  <div id="eventsTab">
+    <div class="loading" id="eventsLoading"><div class="spinner"></div><br>Loading events...</div>
+    <div class="table-container" id="eventsTableContainer" style="display:none">
+      <table>
+        <thead>
+          <tr>
+            <th>Event Name</th>
+            <th>Type</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Method</th>
+            <th>Target</th>
+            <th id="eventActionsHeader" style="display:none">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="eventsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Event Types Tab -->
+  <div id="typesTab" style="display:none">
+    <div class="admin-panel" id="typeAdminPanel">
+      <h3 id="typeFormTitle">➕ Add Event Type</h3>
+      <div class="form-row">
+        <input type="text" id="typeName" placeholder="Type Name">
+        <select id="typeMethod" onchange="toggleChestTypesSection()">
+          <option value="chest-based">Chest-based</option>
+          <option value="manual-entry">Manual Entry</option>
+          <option value="period-marker">Period Marker</option>
+        </select>
+      </div>
+      <div class="chest-types-section" id="chestTypesSection">
+        <label>Chest Types for This Event Type</label>
+        <div id="chestTypesList">
+          <div style="padding:12px; color:var(--text-muted); text-align:center;">Loading chest types...</div>
+        </div>
+        <div class="note">Select which chest types count for this event type.</div>
+      </div>
+      <div class="form-row">
+        <input type="text" id="typeDescription" placeholder="Description">
+        <input type="number" id="typeThreshold" placeholder="Threshold">
+        <button class="btn" onclick="saveEventType()">Save Type</button>
+        <button class="btn secondary" id="cancelTypeEditBtn" style="display:none" onclick="cancelTypeEdit()">Cancel</button>
+      </div>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Type Name</th>
+            <th>Method</th>
+            <th>Chest Types</th>
+            <th>Threshold</th>
+            <th id="typeActionsHeader" style="display:none">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="typesTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Participation Detail -->
+  <div class="participation-section" id="participationSection" style="display:none">
+    <h3 id="participationTitle">Participation</h3>
+    <div class="form-row" id="participationActions" style="display:none">
+      <button class="btn" onclick="calculateParticipation()">🔄 Recalculate</button>
+      <button class="btn secondary" onclick="fillNonParticipants()">Fill Non-Participants</button>
+    </div>
+    <!-- Manual Entry Form (shown for manual-entry events) -->
+    <div id="manualEntryForm" style="display:none; margin: 12px 0; padding: 12px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
+      <h4 style="color: var(--primary); margin-bottom: 8px;">✏️ Add Manual Entry</h4>
+      <div class="form-row">
+        <select id="manualMember" style="flex:1; min-width:140px; padding:8px 12px; background:#fff; border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:0.9em;">
+          <option value="">Select member...</option>
+        </select>
+        <input type="number" id="manualPoints" placeholder="Points" style="flex:0.5; min-width:80px; padding:8px 12px; background:#fff; border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:0.9em;" onkeypress="if(event.key==='Enter') saveManualEntry()">
+        <button class="btn" onclick="saveManualEntry()">💾 Save</button>
+      </div>
+      <div id="manualEntryStatus" style="font-size:0.85em; margin-top:6px;"></div>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead><tr id="participationHeaders"></tr></thead>
+        <tbody id="participationBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let eventsData = [];
+  let eventTypesData = [];
+  let availableChestTypes = [];
+  let isLoggedIn = false;
+  let currentUser = null;
+  let editingEvent = null;
+  let editingType = null;
+  let selectedEvent = null;
+  let membersData = [];
+
+  document.addEventListener('DOMContentLoaded', () => {
+    checkLoginState();
+    toggleChestTypesSection();
+    if (isLoggedIn) {
+      document.getElementById('loginGate').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      loadEvents();
+      loadEventTypes();
+      loadMembers();
+    }
+  });
+
+  // AUTH
+  function checkLoginState() {
+    const stored = localStorage.getItem('sk6_auth');
+    if (stored) {
+      try {
+        const auth = JSON.parse(stored);
+        if (auth.email && auth.allowed) { isLoggedIn = true; currentUser = auth; updateLoginUI(); }
+      } catch (e) {}
+    }
+  }
+  function handleLogin() {
+    if (!document.getElementById('gsi-script')) {
+      const s = document.createElement('script'); s.id = 'gsi-script';
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.onload = () => { google.accounts.id.initialize({ client_id: SITE_CONFIG.googleClientId, callback: handleGoogleCallback }); google.accounts.id.prompt(); };
+      document.head.appendChild(s);
+    } else { google.accounts.id.prompt(); }
+  }
+  async function handleGoogleCallback(response) {
+    try {
+      const res = await fetch(window.GAS_WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: response.credential }) });
+      const data = await res.json();
+      if (data.success && data.email) {
+        const vRes = await fetch(window.GAS_WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'api', fn: 'verifyGoogleLogin', args: [{ email: data.email }] }) });
+        const vData = await vRes.json();
+        const auth = vData.data || vData;
+        if (auth.success && auth.allowed) {
+          isLoggedIn = true; currentUser = { email: data.email, allowed: true };
+          localStorage.setItem('sk6_auth', JSON.stringify(currentUser));
+          updateLoginUI(); showToast('Logged in', 'success');
+        } else { showToast('Access denied', 'error'); }
+      }
+    } catch (err) { showToast('Login error', 'error'); }
+  }
+  function handleLogout() { isLoggedIn = false; currentUser = null; localStorage.removeItem('sk6_auth'); window.location.href = 'dashboard.html'; }
+  function updateLoginUI() {
+    document.getElementById('userEmail').textContent = isLoggedIn ? currentUser.email : '';
+    document.getElementById('userEmail').style.display = isLoggedIn ? 'inline' : 'none';
+    document.getElementById('loginBtn').style.display = isLoggedIn ? 'none' : 'inline';
+    document.getElementById('logoutBtn').style.display = isLoggedIn ? 'inline' : 'none';
+    // Show/hide main content based on login
+    document.getElementById('loginGate').style.display = isLoggedIn ? 'none' : 'block';
+    document.getElementById('mainContent').style.display = isLoggedIn ? 'block' : 'none';
+    if (isLoggedIn) {
+      document.getElementById('adminPanel').classList.add('visible');
+      document.getElementById('typeAdminPanel').classList.add('visible');
+      document.getElementById('eventActionsHeader').style.display = '';
+      document.getElementById('typeActionsHeader').style.display = '';
+      document.getElementById('participationActions').style.display = 'flex';
+      if (eventsData.length === 0) loadEvents();
+      if (eventTypesData.length === 0) loadEventTypes();
+      if (membersData.length === 0) loadMembers();
+      if (eventsData.length > 0) renderEvents();
+      if (eventTypesData.length > 0) renderEventTypes();
+    }
+  }
+
+  // TABS
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.sub-tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('eventsTab').style.display = tab === 'events' ? 'block' : 'none';
+    document.getElementById('typesTab').style.display = tab === 'types' ? 'block' : 'none';
+    document.getElementById('adminPanel').style.display = (tab === 'events' && isLoggedIn) ? 'block' : 'none';
+  }
+
+  // LOAD DATA
+  async function loadEvents() {
+    try {
+      const result = await callFunction('getAllEvents');
+      if (result && result.success) {
+        eventsData = result.events || [];
+        renderEvents();
+      }
+      document.getElementById('eventsLoading').style.display = 'none';
+      document.getElementById('eventsTableContainer').style.display = 'block';
+    } catch (err) {
+      document.getElementById('eventsLoading').innerHTML = '<span style="color:var(--danger)">Failed to load events</span>';
+    }
+  }
+
+  async function loadEventTypes() {
+    try {
+      const result = await callFunction('getAllEventTypes');
+      if (result && result.success) {
+        eventTypesData = result.eventTypes || [];
+        renderEventTypes();
+        populateEventTypeDropdown();
+      }
+      loadChestTypes();
+    } catch (err) { console.error(err); }
+  }
+
+  async function loadChestTypes() {
+    try {
+      const result = await callFunction('getAvailableChestTypes');
+      if (result && result.success) {
+        availableChestTypes = result.chestTypes || [];
+        renderChestTypesList();
+      }
+    } catch (err) { console.error('Failed to load chest types:', err); }
+  }
+
+  function renderChestTypesList() {
+    const container = document.getElementById('chestTypesList');
+    if (!availableChestTypes || availableChestTypes.length === 0) {
+      container.innerHTML = '<div style="padding:12px; color:var(--text-muted);">No chest types found</div>';
+      return;
+    }
+    container.innerHTML = availableChestTypes.map((type, index) =>
+      `<div class="checkbox-item">
+        <input type="checkbox" id="chest_${index}" value="${escapeHtml(type)}">
+        <label for="chest_${index}">${escapeHtml(type)}</label>
+      </div>`
+    ).join('');
+  }
+
+  function getSelectedChestTypes() {
+    const checkboxes = document.querySelectorAll('#chestTypesList input[type="checkbox"]:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+  }
+
+  function setSelectedChestTypes(typesStr) {
+    const types = (typesStr || '').split(',').map(t => t.trim()).filter(t => t);
+    document.querySelectorAll('#chestTypesList input[type="checkbox"]').forEach(cb => {
+      cb.checked = types.includes(cb.value);
+    });
+  }
+
+  function toggleChestTypesSection() {
+    const method = document.getElementById('typeMethod').value;
+    document.getElementById('chestTypesSection').style.display = method === 'chest-based' ? 'block' : 'none';
+  }
+
+  function populateEventTypeDropdown() {
+    const select = document.getElementById('eventType');
+    select.innerHTML = '<option value="">Select type...</option>';
+    eventTypesData.forEach(et => {
+      const opt = document.createElement('option');
+      opt.value = et.name; opt.textContent = et.name;
+      select.appendChild(opt);
+    });
+  }
+
+  // RENDER
+  function renderEvents() {
+    const tbody = document.getElementById('eventsTableBody');
+    tbody.innerHTML = '';
+    const sorted = [...eventsData].sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
+    sorted.forEach(ev => {
+      const methodClass = ev.participationMethod === 'chest-based' ? 'method-chest' :
+        ev.participationMethod === 'period-marker' ? 'method-period' : 'method-manual';
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.onclick = () => showParticipation(ev);
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(ev.eventName)}</strong></td>
+        <td>${escapeHtml(ev.eventType)}</td>
+        <td>${ev.startDate || '-'}</td>
+        <td>${ev.endDate || '-'}</td>
+        <td><span class="method-badge ${methodClass}">${ev.participationMethod}</span></td>
+        <td>${ev.targetPoints || '-'}</td>
+        ${isLoggedIn ? `<td class="event-actions" onclick="event.stopPropagation()">
+          <button onclick="editEvent('${escapeAttr(ev.eventName)}')">✏️</button>
+          <button onclick="deleteEvent('${escapeAttr(ev.eventName)}')">🗑️</button>
+        </td>` : ''}
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderEventTypes() {
+    const tbody = document.getElementById('typesTableBody');
+    tbody.innerHTML = '';
+    eventTypesData.forEach(et => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(et.name)}</strong></td>
+        <td>${et.trackingMethod}</td>
+        <td>${escapeHtml(et.chestTypes)}</td>
+        <td>${et.threshold || '-'}</td>
+        ${isLoggedIn ? `<td class="event-actions">
+          <button onclick="editEventType('${escapeAttr(et.name)}')">✏️</button>
+          <button onclick="deleteEventType('${escapeAttr(et.name)}')">🗑️</button>
+        </td>` : ''}
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // EVENT CRUD
+  async function saveEvent() {
+    const name = document.getElementById('eventName').value.trim();
+    const type = document.getElementById('eventType').value;
+    const start = document.getElementById('eventStartDate').value;
+    const end = document.getElementById('eventEndDate').value;
+    const target = document.getElementById('eventTargetPoints').value;
+    if (!name || !type || !start || !end) { showToast('All fields required', 'error'); return; }
+
+    try {
+      let result;
+      if (editingEvent) {
+        result = await callFunction('updateEvent', [editingEvent, name, type, start, end, target ? Number(target) : null]);
+      } else {
+        result = await callFunction('addEvent', [name, type, start, end, target ? Number(target) : null]);
+      }
+      showToast(result?.message || 'Done', result?.success ? 'success' : 'error');
+      if (result?.success) { cancelEdit(); loadEvents(); }
+    } catch (err) { showToast('Error: ' + err.message, 'error'); }
+  }
+
+  function editEvent(name) {
+    const ev = eventsData.find(e => e.eventName === name);
+    if (!ev) return;
+    editingEvent = name;
+    document.getElementById('eventName').value = ev.eventName;
+    document.getElementById('eventType').value = ev.eventType;
+    document.getElementById('eventStartDate').value = ev.startDate;
+    document.getElementById('eventEndDate').value = ev.endDate;
+    document.getElementById('eventTargetPoints').value = ev.targetPoints || '';
+    document.getElementById('eventFormTitle').textContent = '✏️ Edit Event';
+    document.getElementById('cancelEditBtn').style.display = 'inline';
+  }
+
+  function cancelEdit() {
+    editingEvent = null;
+    document.getElementById('eventName').value = '';
+    document.getElementById('eventType').value = '';
+    document.getElementById('eventStartDate').value = '';
+    document.getElementById('eventEndDate').value = '';
+    document.getElementById('eventTargetPoints').value = '';
+    document.getElementById('eventFormTitle').textContent = '➕ Add New Event';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+  }
+
+  async function deleteEvent(name) {
+    if (!confirm(`Delete event "${name}"?`)) return;
+    try {
+      const result = await callFunction('deleteEvent', [name]);
+      showToast(result?.message || 'Done', result?.success ? 'success' : 'error');
+      if (result?.success) loadEvents();
+    } catch (err) { showToast('Error: ' + err.message, 'error'); }
+  }
+
+  // EVENT TYPE CRUD
+  async function saveEventType() {
+    const name = document.getElementById('typeName').value.trim();
+    const method = document.getElementById('typeMethod').value;
+    const chestTypes = method === 'chest-based' ? getSelectedChestTypes().join(',') : '';
+    const description = document.getElementById('typeDescription').value;
+    const threshold = document.getElementById('typeThreshold').value;
+    if (!name || !method) { showToast('Name and method required', 'error'); return; }
+
+    try {
+      let result;
+      if (editingType) {
+        result = await callFunction('updateEventType', [editingType, name, method, chestTypes, description, threshold ? Number(threshold) : 0]);
+      } else {
+        result = await callFunction('addEventType', [name, method, chestTypes, description, threshold ? Number(threshold) : 0]);
+      }
+      showToast(result?.message || 'Done', result?.success ? 'success' : 'error');
+      if (result?.success) { cancelTypeEdit(); loadEventTypes(); }
+    } catch (err) { showToast('Error: ' + err.message, 'error'); }
+  }
+
+  function editEventType(name) {
+    const et = eventTypesData.find(t => t.name === name);
+    if (!et) return;
+    editingType = name;
+    document.getElementById('typeName').value = et.name;
+    document.getElementById('typeMethod').value = et.trackingMethod;
+    toggleChestTypesSection();
+    setSelectedChestTypes(et.chestTypes);
+    document.getElementById('typeDescription').value = et.description || '';
+    document.getElementById('typeThreshold').value = et.threshold || '';
+    document.getElementById('typeFormTitle').textContent = '✏️ Edit Event Type';
+    document.getElementById('cancelTypeEditBtn').style.display = 'inline';
+  }
+
+  function cancelTypeEdit() {
+    editingType = null;
+    document.getElementById('typeName').value = '';
+    document.getElementById('typeMethod').value = 'chest-based';
+    toggleChestTypesSection();
+    document.querySelectorAll('#chestTypesList input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    document.getElementById('typeDescription').value = '';
+    document.getElementById('typeThreshold').value = '';
+    document.getElementById('typeFormTitle').textContent = '➕ Add Event Type';
+    document.getElementById('cancelTypeEditBtn').style.display = 'none';
+  }
+
+  async function deleteEventType(name) {
+    if (!confirm(`Delete event type "${name}"?`)) return;
+    try {
+      const result = await callFunction('deleteEventType', [name]);
+      showToast(result?.message || 'Done', result?.success ? 'success' : 'error');
+      if (result?.success) loadEventTypes();
+    } catch (err) { showToast('Error: ' + err.message, 'error'); }
+  }
+
+  // PARTICIPATION
+  async function showParticipation(ev) {
+    selectedEvent = ev;
+    document.getElementById('participationSection').style.display = 'block';
+    document.getElementById('participationTitle').textContent = `📊 ${ev.eventName} — Participation`;
+
+    // Show manual entry form for manual-entry events when logged in
+    const manualForm = document.getElementById('manualEntryForm');
+    if (manualForm) {
+      manualForm.style.display = (ev.participationMethod === 'manual-entry' && isLoggedIn) ? 'block' : 'none';
+      document.getElementById('manualEntryStatus').textContent = '';
+      if (membersData.length === 0 && isLoggedIn) loadMembers();
+    }
+
+    if (ev.participationMethod === 'period-marker') {
+      document.getElementById('participationBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Period markers don\'t track participation</td></tr>';
+      document.getElementById('participationHeaders').innerHTML = '';
+      return;
+    }
+
+    try {
+      const result = await callFunction('getEventParticipation', [ev.eventName]);
+      if (result && result.success && result.data.length > 0) {
+        const headers = Object.keys(result.data[0]);
+        document.getElementById('participationHeaders').innerHTML = headers.map(h => `<th>${escapeHtml(h)}</th>`).join('');
+        document.getElementById('participationBody').innerHTML = result.data.map(row =>
+          '<tr>' + headers.map(h => `<td>${escapeHtml(String(row[h] || ''))}</td>`).join('') + '</tr>'
+        ).join('');
+      } else {
+        document.getElementById('participationHeaders').innerHTML = '';
+        document.getElementById('participationBody').innerHTML = '<tr><td style="text-align:center;color:var(--text-muted)">No participation data yet</td></tr>';
+      }
+    } catch (err) { showToast('Error loading participation', 'error'); }
+  }
+
+  async function calculateParticipation() {
+    if (!selectedEvent) return;
+    try {
+      const result = await callFunction('calculateChestParticipation', [selectedEvent.eventName, selectedEvent.startDate, selectedEvent.endDate, selectedEvent.eventType]);
+      showToast(result?.message || 'Done', result?.success ? 'success' : 'error');
+      if (result?.success) showParticipation(selectedEvent);
+    } catch (err) { showToast('Error: ' + err.message, 'error'); }
+  }
+
+  async function fillNonParticipants() {
+    if (!selectedEvent) return;
+    try {
+      const result = await callFunction('calculateManualNonParticipants', [selectedEvent.eventName]);
+      showToast(result?.message || 'Done', result?.success ? 'success' : 'error');
+      if (result?.success) showParticipation(selectedEvent);
+    } catch (err) { showToast('Error: ' + err.message, 'error'); }
+  }
+
+  // MEMBERS
+  async function loadMembers() {
+    try {
+      const result = await callFunction('getMembersList');
+      const list = result?.members || result?.data || result || [];
+      membersData = Array.isArray(list) ? list : [];
+      populateMemberSelect();
+    } catch (err) { console.error('Failed to load members:', err); membersData = []; }
+  }
+
+  function populateMemberSelect() {
+    const select = document.getElementById('manualMember');
+    if (!select) return;
+    const sorted = [...membersData].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    select.innerHTML = '<option value="">Select member...</option>' +
+      sorted.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}</option>`).join('');
+  }
+
+  // MANUAL ENTRY
+  async function saveManualEntry() {
+    const status = document.getElementById('manualEntryStatus');
+    status.textContent = '';
+    if (!selectedEvent) { status.textContent = 'No event selected.'; status.style.color = 'var(--danger)'; return; }
+    const memberName = document.getElementById('manualMember').value;
+    const points = parseInt(document.getElementById('manualPoints').value) || 0;
+    if (!memberName) { status.textContent = 'Please select a member.'; status.style.color = 'var(--danger)'; return; }
+    status.textContent = 'Saving...'; status.style.color = 'var(--text-muted)';
+    try {
+      const result = await callFunction('recordManualParticipation', [selectedEvent.eventName, memberName, points, '']);
+      if (result?.success) {
+        status.textContent = result.message || 'Saved!'; status.style.color = 'var(--success)';
+        document.getElementById('manualPoints').value = '';
+        document.getElementById('manualMember').value = '';
+        showParticipation(selectedEvent);
+      } else {
+        status.textContent = result?.message || 'Failed to save.'; status.style.color = 'var(--danger)';
+      }
+    } catch (err) { status.textContent = 'Error: ' + err.message; status.style.color = 'var(--danger)'; }
+  }
+
+  // UTILITIES
+  function escapeHtml(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+  function escapeAttr(str) { return String(str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+  function showToast(msg, type) {
+    const t = document.getElementById('toast'); t.textContent = msg;
+    t.className = 'toast ' + (type || ''); t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3000);
+  }
+</script>
+</body>
+</html>
