@@ -198,15 +198,15 @@
     }
     @media (max-width: 600px) {
       body { padding: 50px 4px 70px 4px; }
-      .tab-nav { flex-wrap: wrap; padding: 0 8px; justify-content: space-between; }
+      .tab-nav { flex-wrap: wrap; padding: 0 8px; align-items: center; }
       .hamburger { display: flex; }
-      .nav-links { display: none; width: 100%; flex-direction: column; }
+      .login-bar {
+        position: static; flex: 1; justify-content: flex-end;
+        padding: 4px 0; gap: 6px;
+      }
+      .nav-links { display: none; width: 100%; flex-direction: column; order: 10; }
       .nav-links.open { display: flex; }
       .nav-links a { padding: 10px 12px; font-size: 0.9em; border-bottom: 1px solid var(--border); }
-      .login-bar {
-        position: static; width: 100%; justify-content: flex-end;
-        padding: 4px 8px; gap: 6px; order: 1;
-      }
       .stat-card .stat-value { font-size: 1.4em; }
       .container { padding: 16px 8px; }
       .header-cell:nth-child(2), .cell:nth-child(2) { min-width: 110px; max-width: 130px; width: 120px; }
