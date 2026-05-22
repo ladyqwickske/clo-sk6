@@ -139,9 +139,25 @@
     }
     .toast.success { border-left: 4px solid var(--success); }
     .toast.error { border-left: 4px solid var(--danger); }
+    .nav-links { display: flex; }
+    .hamburger {
+      display: none; background: none; border: none; cursor: pointer; padding: 8px;
+      flex-direction: column; gap: 4px;
+    }
+    .hamburger span {
+      display: block; width: 22px; height: 2px; background: var(--primary); border-radius: 2px;
+    }
     @media (max-width: 600px) {
       body { padding: 50px 4px 70px 4px; }
-      .tab-nav a { padding: 10px 10px; font-size: 0.8em; }
+      .tab-nav { flex-wrap: wrap; padding: 0 8px; justify-content: space-between; }
+      .hamburger { display: flex; }
+      .nav-links { display: none; width: 100%; flex-direction: column; }
+      .nav-links.open { display: flex; }
+      .nav-links a { padding: 10px 12px; font-size: 0.9em; border-bottom: 1px solid var(--border); }
+      .login-bar {
+        position: static; width: 100%; justify-content: flex-end;
+        padding: 4px 8px; gap: 6px; order: 1;
+      }
       .day-cell { min-height: 50px; }
       .event-dot { font-size: 0.6em; }
       .month-nav .month-label { font-size: 1em; min-width: 140px; }
@@ -151,17 +167,19 @@
 <body>
 
 <nav class="tab-nav">
-  <a href="dashboard.html"><img src="chest.png" class="nav-icon" alt=""> Dashboard</a>
-  <a href="events.html" id="navEvents" style="display:none"><img src="events.png" class="nav-icon" alt=""> Events</a>
-  <a href="members.html" id="navMembers" style="display:none"><img src="members.png" class="nav-icon" alt=""> Members</a>
-  <a href="calendar.html" class="active"><img src="calendar.png" class="nav-icon" alt=""> Calendar</a>
+  <button class="hamburger" id="hamburgerBtn" onclick="document.getElementById('navLinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+  <div class="login-bar">
+    <span class="user-email" id="userEmail" style="display:none"></span>
+    <button id="loginBtn" onclick="handleLogin()">🔑 Login</button>
+    <button id="logoutBtn" class="logout-btn" style="display:none" onclick="handleLogout()">Logout</button>
+  </div>
+  <div class="nav-links" id="navLinks">
+    <a href="dashboard.html"><img src="chest.png" class="nav-icon" alt=""> Dashboard</a>
+    <a href="events.html" id="navEvents" style="display:none"><img src="events.png" class="nav-icon" alt=""> Events</a>
+    <a href="members.html" id="navMembers" style="display:none"><img src="members.png" class="nav-icon" alt=""> Members</a>
+    <a href="calendar.html" class="active"><img src="calendar.png" class="nav-icon" alt=""> Calendar</a>
+  </div>
 </nav>
-
-<div class="login-bar">
-  <span class="user-email" id="userEmail" style="display:none"></span>
-  <button id="loginBtn" onclick="handleLogin()">🔑 Login</button>
-  <button id="logoutBtn" class="logout-btn" style="display:none" onclick="handleLogout()">Logout</button>
-</div>
 
 <div class="container">
   <img src="clo-sk6.png" alt="cCc League One SK6" class="site-logo">
