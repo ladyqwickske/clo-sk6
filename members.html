@@ -211,24 +211,21 @@
 
     <div id="troopTab" class="tab-panel active">
       <h3 style="margin:0 0 10px;color:var(--primary)">Track Troop Levels</h3>
-      <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
-        <div><label>Member</label><select id="troopMemberSelect"></select></div>
-        <div><label>Troop Type</label>
-          <select id="troopTypeSelect">
-            <option value="G">General (G)</option>
-            <option value="M">Military (M)</option>
-            <option value="S">Siege (S)</option>
-            <option value="E">Elite (E)</option>
-            <option value="C">Cavalry (C)</option>
-          </select>
-        </div>
-        <div><label>Level</label><input type="number" id="troopLevelInput" placeholder="e.g. 7" min="1" max="10" onkeypress="if(event.key==='Enter') submitTroopEntry();"></div>
-      </div>
       <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+        <div><label>Member</label><select id="troopMemberSelect" onchange="loadMemberTroops()"></select></div>
         <div><label>Date</label><input type="date" id="troopDateInput"><div class="note">Defaults to today</div></div>
+      </div>
+      <div class="form-grid" style="grid-template-columns: repeat(5, 1fr);">
+        <div><label>Guardsmen (G)</label><input type="number" id="troopG" min="3" max="9" placeholder="3-9"></div>
+        <div><label>Specialists (S)</label><input type="number" id="troopS" min="3" max="9" placeholder="3-9"></div>
+        <div><label>Monsters (M)</label><input type="number" id="troopM" min="3" max="9" placeholder="3-9"></div>
+        <div><label>Eng. Corps (E)</label><input type="number" id="troopE" min="3" max="9" placeholder="3-9"></div>
+        <div><label>Carter Lvl (C)</label><input type="number" id="troopC" min="1" max="500" placeholder="1-500"></div>
+      </div>
+      <div class="form-grid" style="grid-template-columns: 1fr;">
         <div><label>Notes (optional)</label><input type="text" id="troopNotesInput" placeholder="e.g. upgraded during event"></div>
       </div>
-      <button class="btn" onclick="submitTroopEntry()">💾 Save Troop Level</button>
+      <button class="btn" onclick="submitAllTroops()">💾 Save Changed Levels</button>
       <div id="troopStatus" class="status"></div>
     </div>
 
@@ -265,11 +262,11 @@
           <th onclick="sortTable('name')">Name</th>
           <th onclick="sortTable('joinDate')">Joined</th>
           <th onclick="sortTable('heroLevel')">Hero</th>
-          <th onclick="sortTable('G')">G</th>
-          <th onclick="sortTable('M')">M</th>
-          <th onclick="sortTable('S')">S</th>
-          <th onclick="sortTable('E')">E</th>
-          <th onclick="sortTable('C')">C</th>
+          <th onclick="sortTable('G')" title="Guardsmen">G</th>
+          <th onclick="sortTable('M')" title="Monsters">M</th>
+          <th onclick="sortTable('S')" title="Specialists">S</th>
+          <th onclick="sortTable('E')" title="Engineer Corps">E</th>
+          <th onclick="sortTable('C')" title="Carter Level">C</th>
           <th id="actionsHeader" style="display:none">Actions</th>
         </tr>
       </thead>
@@ -511,11 +508,22 @@
     return '#d7ccc8';
   }
 
-  // QUICK EDIT from table row
+  // TROOP BULK FORM
+  let loadedTroopLevels = {};
+  function loadMemberTroops() {
+    const name = document.getElementById('troopMemberSelect').value;
+    const key = name ? name.toLowerCase() : '';
+    const troops = troopData[key] || {};
+    loadedTroopLevels = { ...troops };
+    ['G', 'S', 'M', 'E', 'C'].forEach(t => {
+      document.getElementById('troop' + t).value = troops[t] || '';
+    });
+  }
   function quickEditTroop(name) {
     document.getElementById('troopMemberSelect').value = name;
     switchTab('troopTab', document.querySelector('.tab-btn-inner'));
-    document.getElementById('troopLevelInput').focus();
+    loadMemberTroops();
+    document.getElementById('troopG').focus();
   }
   function quickEditHero(name) {
     document.getElementById('heroMemberSelect').value = name;
@@ -538,38 +546,44 @@
     if (btn) btn.classList.add('active');
   }
 
-  // TROOP ENTRY
-  async function submitTroopEntry() {
+  // TROOP BULK ENTRY
+  async function submitAllTroops() {
     const playerName = document.getElementById('troopMemberSelect').value;
-    const troopType = document.getElementById('troopTypeSelect').value;
-    const levelRaw = document.getElementById('troopLevelInput').value;
     const date = document.getElementById('troopDateInput').value;
     const notes = document.getElementById('troopNotesInput').value.trim();
     const status = document.getElementById('troopStatus');
     status.textContent = ''; status.className = 'status';
-
     if (!playerName) { status.textContent = 'Please select a member.'; status.className = 'status err'; return; }
-    const level = parseInt(levelRaw, 10);
-    if (isNaN(level) || level < 1) { status.textContent = 'Enter a valid level (1+).'; status.className = 'status err'; return; }
-
-    status.textContent = 'Saving...';
     const customTimestamp = date ? date + 'T12:00:00Z' : null;
-    try {
-      const result = await callFunction('addTroopEntry', [playerName, troopType, level, notes, customTimestamp]);
-      if (result && result.success) {
-        status.textContent = `Saved ${troopType} level ${level} for ${playerName}.`;
-        status.className = 'status ok';
-        document.getElementById('troopLevelInput').value = '';
-        document.getElementById('troopNotesInput').value = '';
-        // Optimistic update
-        const key = playerName.toLowerCase();
-        if (!troopData[key]) troopData[key] = {};
-        troopData[key][troopType] = level;
-        renderTable();
-      } else {
-        status.textContent = result?.message || 'Failed to save.';
-        status.className = 'status err';
+    const types = ['G', 'S', 'M', 'E', 'C'];
+    const changes = [];
+    for (const t of types) {
+      const raw = document.getElementById('troop' + t).value;
+      if (raw === '') continue;
+      const level = parseInt(raw, 10);
+      const isC = t === 'C';
+      if (isNaN(level) || (isC ? (level < 1 || level > 500) : (level < 3 || level > 9))) {
+        status.textContent = `${t}: ${isC ? 'must be 1-500' : 'must be 3-9'}.`;
+        status.className = 'status err'; return;
       }
+      if (level !== (loadedTroopLevels[t] || 0)) changes.push({ type: t, level });
+    }
+    if (changes.length === 0) { status.textContent = 'No changes detected.'; status.className = 'status err'; return; }
+    status.textContent = `Saving ${changes.length} change(s)...`;
+    try {
+      const results = await Promise.all(
+        changes.map(c => callFunction('addTroopEntry', [playerName, c.type, c.level, notes, customTimestamp]))
+      );
+      const ok = results.filter(r => r && r.success).length;
+      const fail = results.length - ok;
+      const key = playerName.toLowerCase();
+      if (!troopData[key]) troopData[key] = {};
+      changes.forEach(c => { troopData[key][c.type] = c.level; });
+      loadedTroopLevels = { ...troopData[key] };
+      renderTable();
+      status.textContent = fail ? `${ok} saved, ${fail} failed.` : `${ok} troop level(s) updated for ${playerName}.`;
+      status.className = fail ? 'status err' : 'status ok';
+      document.getElementById('troopNotesInput').value = '';
     } catch (err) {
       status.textContent = 'Error: ' + err.message;
       status.className = 'status err';
